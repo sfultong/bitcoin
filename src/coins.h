@@ -310,6 +310,17 @@ struct CCoinsStats
     CCoinsStats() : nHeight(0), nTransactions(0), nTransactionOutputs(0), nSerializedSize(0), nTotalAmount(0) {}
 };
 
+struct SnapshotStats
+{
+    uint64_t nP2PKH;
+    uint64_t nNonstandard;
+    uint64_t nPubkey;
+    uint64_t nScriptHash;
+    uint64_t nMultisig;
+    uint64_t nNullData;
+
+    SnapshotStats() : nP2PKH(0), nNonstandard(0), nPubkey(0), nScriptHash(0), nMultisig(0), nNullData(0) {}
+};
 
 /** Abstract view on the open txout dataset. */
 class CCoinsView
@@ -332,6 +343,8 @@ public:
     //! Calculate statistics about the unspent transaction output set
     virtual bool GetStats(CCoinsStats &stats) const;
 
+    virtual bool WriteSnapshot(SnapshotStats &stats) const;
+
     //! As we use CCoinsViews polymorphically, have a virtual destructor
     virtual ~CCoinsView() {}
 };
@@ -351,6 +364,7 @@ public:
     void SetBackend(CCoinsView &viewIn);
     bool BatchWrite(CCoinsMap &mapCoins, const uint256 &hashBlock);
     bool GetStats(CCoinsStats &stats) const;
+    bool WriteSnapshot(SnapshotStats &stats) const;
 };
 
 

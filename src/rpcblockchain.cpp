@@ -565,6 +565,24 @@ UniValue verifychain(const UniValue& params, bool fHelp)
     return CVerifyDB().VerifyDB(pcoinsTip, nCheckLevel, nCheckDepth);
 }
 
+UniValue writesnapshot(const UniValue& params, bool fHelp)
+{
+    if (fHelp || params.size() > 0)
+        throw runtime_error("writesnapshot - no parameters required");
+
+    SnapshotStats stats;
+    //if (pcoinsTip->GetStats(stats)) {
+    // get best chain and write out list of blocks from it
+
+    UniValue ret(UniValue::VOBJ);
+    if (pcoinsTip->WriteSnapshot(stats)) {
+        ret.push_back(Pair("pubkey", (int64_t) stats.nPubkey));
+        ret.push_back(Pair("p2pkh", (int64_t) stats.nP2PKH));
+    }
+
+    return ret;
+}
+
 /** Implementation of IsSuperMajority with better feedback */
 static UniValue SoftForkMajorityDesc(int minVersion, CBlockIndex* pindex, int nRequired, const Consensus::Params& consensusParams)
 {

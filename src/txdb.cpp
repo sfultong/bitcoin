@@ -11,10 +11,12 @@
 #include "main.h"
 #include "pow.h"
 #include "uint256.h"
+#include "script/standard.h"
 
 #include <stdint.h>
 
 #include <boost/thread.hpp>
+#include <bitcoin/bst/generate.h>
 
 using namespace std;
 
@@ -99,6 +101,49 @@ bool CBlockTreeDB::ReadReindexing(bool &fReindexing) {
 
 bool CBlockTreeDB::ReadLastBlockFile(int &nFile) {
     return Read(DB_LAST_BLOCK, nFile);
+}
+
+bool CCoinsViewDB::WriteSnapshot(SnapshotStats& stats) const {
+    boost::scoped_ptr<leveldb::Iterator> pcursor(const_cast<CLevelDBWrapper*>(&db)->NewIterator());
+    pcursor->SeekToFirst();
+    bst::snapshot_preparer preparer;
+    preparer.debug = true;
+    bst::prepareForUTXOs(preparer);
+    uint256 bestblock_256 = GetBestBlock();
+    vector<uint8_t> blockhash = vector<uint8_t>(bestblock_256.begin(), bestblock_256.end());
+
+    while (pcursor->Valid()) {
+        boost::this_thread::interruption_point();
+        try {
+            leveldb::Slice slKey = pcursor->key();
+            CDataStream ssKey(slKey.data(), slKey.data()+slKey.size(), SER_DISK, CLIENT_VERSION);
+            char chType;
+            ssKey >> chType;
+            if (chType == DB_COINS) {
+                leveldb::Slice slValue = pcursor->value();
+                CDataStream ssValue(slValue.data(), slValue.data()+slValue.size(), SER_DISK, CLIENT_VERSION);
+                CCoins coins;
+                ssValue >> coins;
+                uint256 txhash;
+                ssKey >> txhash;
+
+                for (unsigned int i=0; i<coins.vout.size(); i++) {
+                    const CTxOut &out = coins.vout[i];
+                    if (!out.IsNull()) {
+                        bst::writeUTXO(preparer, out.scriptPubKey, (uint64_t) out.nValue);
+                    }
+                }
+            }
+            pcursor->Next();
+        } catch (const std::exception& e) {
+            bst::writeSnapshot(preparer, blockhash);
+            return error("%s: Deserialize or I/O error - %s", __func__, e.what());
+        }
+
+    }
+    bst::writeSnapshot(preparer, blockhash);
+    bst::printSnapshot();
+    return true;
 }
 
 bool CCoinsViewDB::GetStats(CCoinsStats &stats) const {
