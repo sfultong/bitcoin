@@ -63,6 +63,7 @@ CConditionVariable cvBlockChange;
 int nScriptCheckThreads = 0;
 bool fImporting = false;
 bool fReindex = false;
+uint32_t nReindexLimit = LONG_MAX;
 bool fTxIndex = false;
 bool fHavePruned = false;
 bool fPruneMode = false;
@@ -2762,6 +2763,11 @@ bool AcceptBlockHeader(const CBlockHeader& block, CValidationState& state, CBloc
 
 bool AcceptBlock(const CBlock& block, CValidationState& state, CBlockIndex** ppindex, bool fRequested, CDiskBlockPos* dbp)
 {
+    uint32_t maxHeight = LONG_MAX;
+    return AcceptBlock(block, state, ppindex, fRequested, dbp, maxHeight);
+}
+bool AcceptBlock(const CBlock& block, CValidationState& state, CBlockIndex** ppindex, bool fRequested, CDiskBlockPos* dbp, uint32_t& heightLimit)
+{
     const CChainParams& chainparams = Params();
     AssertLockHeld(cs_main);
 
@@ -2801,6 +2807,11 @@ bool AcceptBlock(const CBlock& block, CValidationState& state, CBlockIndex** ppi
 
     int nHeight = pindex->nHeight;
 
+    if (nHeight >= heightLimit)
+    {
+        heightLimit = 0;
+    }
+
     // Write block to history file
     try {
         unsigned int nBlockSize = ::GetSerializeSize(block, SER_DISK, CLIENT_VERSION);
@@ -2836,8 +2847,13 @@ static bool IsSuperMajority(int minVersion, const CBlockIndex* pstart, unsigned 
     return (nFound >= nRequired);
 }
 
-
 bool ProcessNewBlock(CValidationState &state, const CNode* pfrom, const CBlock* pblock, bool fForceProcessing, CDiskBlockPos *dbp)
+{
+    uint32_t maxHeight = LONG_MAX;
+    return ProcessNewBlock(state,pfrom, pblock, fForceProcessing, dbp, maxHeight);
+}
+
+bool ProcessNewBlock(CValidationState &state, const CNode* pfrom, const CBlock* pblock, bool fForceProcessing, CDiskBlockPos *dbp, uint32_t& heightLimit)
 {
     // Preliminary checks
     bool checked = CheckBlock(*pblock, state);
@@ -2852,7 +2868,7 @@ bool ProcessNewBlock(CValidationState &state, const CNode* pfrom, const CBlock* 
 
         // Store to disk
         CBlockIndex *pindex = NULL;
-        bool ret = AcceptBlock(*pblock, state, &pindex, fRequested, dbp);
+        bool ret = AcceptBlock(*pblock, state, &pindex, fRequested, dbp, heightLimit);
         if (pindex && pfrom) {
             mapBlockSource[pindex->GetBlockHash()] = pfrom->GetId();
         }
@@ -3351,6 +3367,11 @@ bool InitBlockIndex() {
 
 bool LoadExternalBlockFile(FILE* fileIn, CDiskBlockPos *dbp)
 {
+    uint32_t maxHeight = LONG_MAX;
+    return LoadExternalBlockFile(fileIn, maxHeight, dbp);
+}
+bool LoadExternalBlockFile(FILE* fileIn, uint32_t& heightLimit, CDiskBlockPos *dbp)
+{
     const CChainParams& chainparams = Params();
     // Map of disk positions for blocks with unknown parent (only used for reindex)
     static std::multimap<uint256, CDiskBlockPos> mapBlocksUnknownParent;
@@ -3408,7 +3429,7 @@ bool LoadExternalBlockFile(FILE* fileIn, CDiskBlockPos *dbp)
                 // process in case the block isn't known yet
                 if (mapBlockIndex.count(hash) == 0 || (mapBlockIndex[hash]->nStatus & BLOCK_HAVE_DATA) == 0) {
                     CValidationState state;
-                    if (ProcessNewBlock(state, NULL, &block, true, dbp))
+                    if (ProcessNewBlock(state, NULL, &block, true, dbp, heightLimit))
                         nLoaded++;
                     if (state.IsError())
                         break;
@@ -3440,6 +3461,13 @@ bool LoadExternalBlockFile(FILE* fileIn, CDiskBlockPos *dbp)
                         mapBlocksUnknownParent.erase(it);
                     }
                 }
+
+                // if we've hit the height limit, abort
+                if (! heightLimit)
+                {
+                    break;
+                }
+
             } catch (const std::exception& e) {
                 LogPrintf("%s: Deserialize or I/O error - %s\n", __func__, e.what());
             }

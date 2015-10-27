@@ -582,7 +582,12 @@ void ThreadImport(std::vector<boost::filesystem::path> vImportFiles)
             if (!file)
                 break; // This error is logged in OpenBlockFile
             LogPrintf("Reindexing block file blk%05u.dat...\n", (unsigned int)nFile);
-            LoadExternalBlockFile(file, &pos);
+            LoadExternalBlockFile(file, nReindexLimit, &pos);
+            if (! nReindexLimit)
+            {
+                break;
+            }
+
             nFile++;
         }
         pblocktree->WriteReindexing(false);
@@ -1171,6 +1176,7 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
     // ********************************************************* Step 7: load block chain
 
     fReindex = GetBoolArg("-reindex", false);
+    nReindexLimit = GetArg("-reindexLimit", LONG_MAX);
 
     // Upgrading to 0.8; hard-link the old blknnnn.dat files into /blocks/
     boost::filesystem::path blocksDir = GetDataDir() / "blocks";
