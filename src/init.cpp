@@ -1176,7 +1176,7 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
     // ********************************************************* Step 7: load block chain
 
     fReindex = GetBoolArg("-reindex", false);
-    nReindexLimit = GetArg("-reindexLimit", LONG_MAX);
+    nReindexLimit = GetArg("-reindexLimit", std::numeric_limits<uint64_t>::max());
 
     // Upgrading to 0.8; hard-link the old blknnnn.dat files into /blocks/
     boost::filesystem::path blocksDir = GetDataDir() / "blocks";

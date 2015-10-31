@@ -107,7 +107,7 @@ bool CCoinsViewDB::WriteSnapshot(SnapshotStats& stats) const {
     boost::scoped_ptr<leveldb::Iterator> pcursor(const_cast<CLevelDBWrapper*>(&db)->NewIterator());
     pcursor->SeekToFirst();
     bst::snapshot_preparer preparer;
-    preparer.debug = true;
+    preparer.debug = false;
     bst::prepareForUTXOs(preparer);
     uint256 bestblock_256 = GetBestBlock();
     vector<uint8_t> blockhash = vector<uint8_t>(bestblock_256.begin(), bestblock_256.end());
@@ -130,19 +130,24 @@ bool CCoinsViewDB::WriteSnapshot(SnapshotStats& stats) const {
                 for (unsigned int i=0; i<coins.vout.size(); i++) {
                     const CTxOut &out = coins.vout[i];
                     if (!out.IsNull()) {
-                        bst::writeUTXO(preparer, out.scriptPubKey, (uint64_t) out.nValue);
+                        if ( ! bst::writeUTXO(preparer, out.scriptPubKey, (uint64_t) out.nValue))
+                        {
+                           cout << "Something went wrong at " << txhash.ToString() << endl;
+                        }
                     }
                 }
             }
             pcursor->Next();
         } catch (const std::exception& e) {
-            bst::writeSnapshot(preparer, blockhash);
+            //bst::writeSnapshot(preparer, blockhash);
+            bst::writeJustSqlite(preparer);
             return error("%s: Deserialize or I/O error - %s", __func__, e.what());
         }
 
     }
-    bst::writeSnapshot(preparer, blockhash);
-    bst::printSnapshot();
+    //bst::writeSnapshot(preparer, blockhash);
+    bst::writeJustSqlite(preparer);
+    //bst::printSnapshot();
     return true;
 }
 

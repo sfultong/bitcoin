@@ -63,7 +63,7 @@ CConditionVariable cvBlockChange;
 int nScriptCheckThreads = 0;
 bool fImporting = false;
 bool fReindex = false;
-uint32_t nReindexLimit = LONG_MAX;
+uint32_t nReindexLimit = std::numeric_limits<uint32_t>::max();
 bool fTxIndex = false;
 bool fHavePruned = false;
 bool fPruneMode = false;
@@ -2763,7 +2763,7 @@ bool AcceptBlockHeader(const CBlockHeader& block, CValidationState& state, CBloc
 
 bool AcceptBlock(const CBlock& block, CValidationState& state, CBlockIndex** ppindex, bool fRequested, CDiskBlockPos* dbp)
 {
-    uint32_t maxHeight = LONG_MAX;
+    uint32_t maxHeight = std::numeric_limits<uint32_t>::max();
     return AcceptBlock(block, state, ppindex, fRequested, dbp, maxHeight);
 }
 bool AcceptBlock(const CBlock& block, CValidationState& state, CBlockIndex** ppindex, bool fRequested, CDiskBlockPos* dbp, uint32_t& heightLimit)
@@ -2849,7 +2849,7 @@ static bool IsSuperMajority(int minVersion, const CBlockIndex* pstart, unsigned 
 
 bool ProcessNewBlock(CValidationState &state, const CNode* pfrom, const CBlock* pblock, bool fForceProcessing, CDiskBlockPos *dbp)
 {
-    uint32_t maxHeight = LONG_MAX;
+    uint32_t maxHeight = std::numeric_limits<uint32_t>::max();
     return ProcessNewBlock(state,pfrom, pblock, fForceProcessing, dbp, maxHeight);
 }
 
@@ -3367,7 +3367,7 @@ bool InitBlockIndex() {
 
 bool LoadExternalBlockFile(FILE* fileIn, CDiskBlockPos *dbp)
 {
-    uint32_t maxHeight = LONG_MAX;
+    uint32_t maxHeight = std::numeric_limits<uint32_t>::max();
     return LoadExternalBlockFile(fileIn, maxHeight, dbp);
 }
 bool LoadExternalBlockFile(FILE* fileIn, uint32_t& heightLimit, CDiskBlockPos *dbp)
