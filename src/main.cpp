@@ -3451,7 +3451,7 @@ bool LoadExternalBlockFile(FILE* fileIn, uint32_t& heightLimit, CDiskBlockPos *d
                             LogPrintf("%s: Processing out of order child %s of %s\n", __func__, block.GetHash().ToString(),
                                     head.ToString());
                             CValidationState dummy;
-                            if (ProcessNewBlock(dummy, NULL, &block, true, &it->second))
+                            if (ProcessNewBlock(dummy, NULL, &block, true, &it->second, heightLimit))
                             {
                                 nLoaded++;
                                 queue.push_back(block.GetHash());
@@ -3459,6 +3459,12 @@ bool LoadExternalBlockFile(FILE* fileIn, uint32_t& heightLimit, CDiskBlockPos *d
                         }
                         range.first++;
                         mapBlocksUnknownParent.erase(it);
+
+                        // if we've hit the height limit, abort
+                        if (! heightLimit)
+                        {
+                            break;
+                        }
                     }
                 }
 
