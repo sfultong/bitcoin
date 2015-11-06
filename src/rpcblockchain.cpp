@@ -565,6 +565,18 @@ UniValue verifychain(const UniValue& params, bool fHelp)
     return CVerifyDB().VerifyDB(pcoinsTip, nCheckLevel, nCheckDepth);
 }
 
+UniValue logutxos(const UniValue& params, bool fHelp)
+{
+    if (fHelp || params.size() > 0)
+        throw runtime_error("loguxtos - no parameters required");
+
+    UniValue ret(UniValue::VOBJ);
+    if (pcoinsTip->LogUTXOs()) {
+        ret.push_back(Pair("status", "done"));
+    }
+    return ret;
+}
+
 UniValue writesnapshot(const UniValue& params, bool fHelp)
 {
     if (fHelp || params.size() > 0)

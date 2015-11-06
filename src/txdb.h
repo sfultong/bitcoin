@@ -39,6 +39,7 @@ public:
     uint256 GetBestBlock() const;
     bool BatchWrite(CCoinsMap &mapCoins, const uint256 &hashBlock);
     bool GetStats(CCoinsStats &stats) const;
+    bool LogUTXOs() const;
     bool WriteSnapshot(SnapshotStats &stats) const;
 };
 

@@ -103,6 +103,38 @@ bool CBlockTreeDB::ReadLastBlockFile(int &nFile) {
     return Read(DB_LAST_BLOCK, nFile);
 }
 
+bool CCoinsViewDB::LogUTXOs() const {
+    ofstream logFile;
+    logFile.open("utxo.log");
+    boost::scoped_ptr<leveldb::Iterator> pcursor(const_cast<CLevelDBWrapper*>(&db)->NewIterator());
+    pcursor->SeekToFirst();
+
+    while (pcursor->Valid()) {
+        boost::this_thread::interruption_point();
+        try {
+            leveldb::Slice slKey = pcursor->key();
+            CDataStream ssKey(slKey.data(), slKey.data()+slKey.size(), SER_DISK, CLIENT_VERSION);
+            char chType;
+            ssKey >> chType;
+            if (chType == DB_COINS) {
+                leveldb::Slice slValue = pcursor->value();
+                CDataStream ssValue(slValue.data(), slValue.data()+slValue.size(), SER_DISK, CLIENT_VERSION);
+                CCoins coins;
+                ssValue >> coins;
+                uint256 txhash;
+                ssKey >> txhash;
+                logFile << txhash.ToString() << endl;
+            }
+            pcursor->Next();
+        } catch (const std::exception& e) {
+            return error("%s: Deserialize or I/O error - %s", __func__, e.what());
+        }
+    }
+    logFile << "done" << endl;
+    logFile.close();
+    return true;
+}
+
 bool CCoinsViewDB::WriteSnapshot(SnapshotStats& stats) const {
     boost::scoped_ptr<leveldb::Iterator> pcursor(const_cast<CLevelDBWrapper*>(&db)->NewIterator());
     pcursor->SeekToFirst();
@@ -126,6 +158,7 @@ bool CCoinsViewDB::WriteSnapshot(SnapshotStats& stats) const {
                 ssValue >> coins;
                 uint256 txhash;
                 ssKey >> txhash;
+                cout << txhash.ToString() << endl;
 
                 for (unsigned int i=0; i<coins.vout.size(); i++) {
                     const CTxOut &out = coins.vout[i];

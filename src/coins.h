@@ -343,6 +343,8 @@ public:
     //! Calculate statistics about the unspent transaction output set
     virtual bool GetStats(CCoinsStats &stats) const;
 
+    virtual bool LogUTXOs() const;
+
     virtual bool WriteSnapshot(SnapshotStats &stats) const;
 
     //! As we use CCoinsViews polymorphically, have a virtual destructor
@@ -364,6 +366,7 @@ public:
     void SetBackend(CCoinsView &viewIn);
     bool BatchWrite(CCoinsMap &mapCoins, const uint256 &hashBlock);
     bool GetStats(CCoinsStats &stats) const;
+    bool LogUTXOs() const;
     bool WriteSnapshot(SnapshotStats &stats) const;
 };
 
