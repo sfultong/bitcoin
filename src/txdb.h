@@ -40,7 +40,7 @@ public:
     bool BatchWrite(CCoinsMap &mapCoins, const uint256 &hashBlock);
     bool GetStats(CCoinsStats &stats) const;
     bool LogUTXOs() const;
-    bool WriteSnapshot(SnapshotStats &stats) const;
+    bool WriteSnapshot(SnapshotStats &stats, CAmount nAmount) const;
 };
 
 /** Access to the block database (blocks/index/) */

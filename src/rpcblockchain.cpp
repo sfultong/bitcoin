@@ -579,15 +579,23 @@ UniValue logutxos(const UniValue& params, bool fHelp)
 
 UniValue writesnapshot(const UniValue& params, bool fHelp)
 {
-    if (fHelp || params.size() > 0)
-        throw runtime_error("writesnapshot - no parameters required");
+    if (fHelp || params.size() > 1)
+        throw runtime_error("writesnapshot ( dustlimit )\n"
+            "\nCreates a compact representation of the ledger.\n"
+            "\nArguments:\n"
+            "1. dustlimit (numeric, optional, >=0, default 100000) All utxos of less satoshis will be pruned.\n"
+        );
 
     SnapshotStats stats;
     //if (pcoinsTip->GetStats(stats)) {
     // get best chain and write out list of blocks from it
 
+    CAmount nAmount = params.size() > 0
+                      ? AmountFromValue(params[1])
+                      : 100000;
+
     UniValue ret(UniValue::VOBJ);
-    if (pcoinsTip->WriteSnapshot(stats)) {
+    if (pcoinsTip->WriteSnapshot(stats, nAmount)) {
         ret.push_back(Pair("pubkey", (int64_t) stats.nPubkey));
         ret.push_back(Pair("p2pkh", (int64_t) stats.nP2PKH));
     }

@@ -135,7 +135,7 @@ bool CCoinsViewDB::LogUTXOs() const {
     return true;
 }
 
-bool CCoinsViewDB::WriteSnapshot(SnapshotStats& stats) const {
+bool CCoinsViewDB::WriteSnapshot(SnapshotStats& stats, CAmount nAmount) const {
     boost::scoped_ptr<leveldb::Iterator> pcursor(const_cast<CLevelDBWrapper*>(&db)->NewIterator());
     pcursor->SeekToFirst();
     bst::snapshot_preparer preparer;
@@ -158,11 +158,10 @@ bool CCoinsViewDB::WriteSnapshot(SnapshotStats& stats) const {
                 ssValue >> coins;
                 uint256 txhash;
                 ssKey >> txhash;
-                cout << txhash.ToString() << endl;
 
                 for (unsigned int i=0; i<coins.vout.size(); i++) {
                     const CTxOut &out = coins.vout[i];
-                    if (!out.IsNull()) {
+                    if (!out.IsNull() && out.nValue >= nAmount) {
                         if ( ! bst::writeUTXO(preparer, out.scriptPubKey, (uint64_t) out.nValue))
                         {
                            cout << "Something went wrong at " << txhash.ToString() << endl;
