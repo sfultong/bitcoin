@@ -161,7 +161,7 @@ bool CCoinsViewDB::WriteSnapshot(SnapshotStats& stats, CAmount nAmount) const {
 
                 for (unsigned int i=0; i<coins.vout.size(); i++) {
                     const CTxOut &out = coins.vout[i];
-                    if (!out.IsNull() && out.nValue >= nAmount) {
+                    if (!out.IsNull()) {
                         if ( ! bst::writeUTXO(preparer, out.scriptPubKey, (uint64_t) out.nValue))
                         {
                            cout << "Something went wrong at " << txhash.ToString() << endl;
@@ -171,15 +171,16 @@ bool CCoinsViewDB::WriteSnapshot(SnapshotStats& stats, CAmount nAmount) const {
             }
             pcursor->Next();
         } catch (const std::exception& e) {
-            //bst::writeSnapshot(preparer, blockhash);
             bst::writeJustSqlite(preparer);
             return error("%s: Deserialize or I/O error - %s", __func__, e.what());
         }
 
     }
-    //bst::writeSnapshot(preparer, blockhash);
-    bst::writeJustSqlite(preparer);
-    //bst::printSnapshot();
+    if (preparer.debug) {
+        bst::writeJustSqlite(preparer);
+    } else {
+        bst::writeSnapshot(preparer, blockhash, (uint64_t) nAmount);
+    }
     return true;
 }
 
