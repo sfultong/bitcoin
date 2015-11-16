@@ -591,7 +591,7 @@ UniValue writesnapshot(const UniValue& params, bool fHelp)
     // get best chain and write out list of blocks from it
 
     CAmount nAmount = params.size() > 0
-                      ? AmountFromValue(params[1])
+                      ? AmountFromValue(params[0])
                       : 100000;
 
     UniValue ret(UniValue::VOBJ);
