@@ -17,10 +17,13 @@ $(LIBLEVELDB) $(LIBMEMENV):
           OPT="$(CXXFLAGS) $(CPPFLAGS)"
 endif
 
+SNAPSHOT_INCLUDES = -I/home/sfultong/bitcoin-spinoff-toolkit/include
+
 BITCOIN_CONFIG_INCLUDES=-I$(builddir)/config
 BITCOIN_INCLUDES=-I$(builddir) -I$(builddir)/obj $(BOOST_CPPFLAGS) $(LEVELDB_CPPFLAGS) $(CRYPTO_CFLAGS) $(SSL_CFLAGS)
 
 BITCOIN_INCLUDES += -I$(srcdir)/secp256k1/include
+BITCOIN_INCLUDES += $(SNAPSHOT_INCLUDES)
 
 LIBBITCOIN_SERVER=libbitcoin_server.a
 LIBBITCOIN_WALLET=libbitcoin_wallet.a
@@ -34,6 +37,10 @@ LIBSECP256K1=secp256k1/libsecp256k1.la
 
 $(LIBSECP256K1): $(wildcard secp256k1/src/*) $(wildcard secp256k1/include/*)
 	$(AM_V_at)$(MAKE) $(AM_MAKEFLAGS) -C $(@D) $(@F)
+
+LIBBST = /home/sfultong/bitcoin-spinoff-toolkit/libspinoff_toolkit.so
+LIBBITCOIN2 = /nix/store/x7g501xv9inzriw999g2xksfsbzm966d-libbitcoin-2.9.0/lib/libbitcoin.so
+LIBBST_ALL = $(LIBBST) $(LIBBITCOIN2)
 
 # Make is not made aware of per-object dependencies to avoid limiting building parallelization
 # But to build the less dependent modules first, we manually select their order here:
@@ -187,6 +194,7 @@ libbitcoin_server_a_SOURCES = \
   txmempool.cpp \
   $(JSON_H) \
   $(BITCOIN_CORE_H)
+# libbitcoin_server_a_LIBADD = $(LIBBST_ALL)
 
 # wallet: shared between bitcoind and bitcoin-qt, but only linked
 # when wallet enabled
@@ -257,6 +265,8 @@ libbitcoin_common_a_SOURCES = \
   script/standard.cpp \
   script/script_error.cpp \
   $(BITCOIN_CORE_H)
+libbitcoin_common_a_LIBADD = $(LIBBST_ALL)
+
 
 # util: shared between all executables.
 # This library *must* be included to make sure that the glibc
@@ -301,6 +311,7 @@ litecoind_LDADD = \
   $(LIBBITCOIN_CRYPTO) \
   $(LIBLEVELDB) \
   $(LIBMEMENV) \
+  $(LIBBST_ALL) \
   $(LIBSECP256K1)
 
 if ENABLE_WALLET
@@ -378,7 +389,7 @@ endif
 
 libbitcoinconsensus_la_LDFLAGS = -no-undefined $(RELDFLAGS)
 libbitcoinconsensus_la_LIBADD = $(CRYPTO_LIBS)
-libbitcoinconsensus_la_CPPFLAGS = $(CRYPTO_CFLAGS) -I$(builddir)/obj -DBUILD_BITCOIN_INTERNAL
+libbitcoinconsensus_la_CPPFLAGS = $(CRYPTO_CFLAGS) -I$(builddir)/obj $(SNAPSHOT_INCLUDES) -DBUILD_BITCOIN_INTERNAL
 if USE_LIBSECP256K1
 libbitcoinconsensus_la_LIBADD += secp256k1/libsecp256k1.la
 endif

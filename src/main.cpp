@@ -1659,18 +1659,25 @@ static int64_t nTimeTotal = 0;
 
 bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pindex, CCoinsViewCache& view, bool fJustCheck)
 {
+    bool isGenesis = block.GetHash() == Params().HashGenesisBlock() && pindex->nHeight == 0;
     AssertLockHeld(cs_main);
     // Check it again in case a previous version let a bad block in
-    if (!CheckBlock(block, state, !fJustCheck, !fJustCheck))
+    if (!isGenesis && !CheckBlock(block, state, !fJustCheck, !fJustCheck))
         return false;
 
     // verify that the view's current state corresponds to the previous block
     uint256 hashPrevBlock = pindex->pprev == NULL ? uint256(0) : pindex->pprev->GetBlockHash();
     assert(hashPrevBlock == view.GetBestBlock());
 
-    // Special case for the genesis block, skipping connection of its transactions
-    // (its coinbase is unspendable)
-    if (block.GetHash() == Params().HashGenesisBlock()) {
+    // if this is the genesis, we just want to add in all transactions without checking them
+    if (isGenesis) {
+        CTxUndo undoDummy;
+        // skip first coinbase in genesis
+        for (unsigned int i = 1; i < block.vtx.size(); i++) {
+            const CTransaction &tx = block.vtx[i];
+            UpdateCoins(tx, state, view, undoDummy, pindex->nHeight);
+        }
+
         view.SetBestBlock(pindex->GetBlockHash());
         return true;
     }
@@ -2457,6 +2464,9 @@ bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state, bool f
 
 bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bool fCheckMerkleRoot)
 {
+    // don't check genesis... it has multiple coinbases
+    if (block.GetHash() == Params().HashGenesisBlock()) return true;
+
     // These are checks that are independent of context.
 
     // Check that the header is valid (particularly PoW).  This is mostly

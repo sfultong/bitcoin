@@ -12,6 +12,8 @@
 #include <assert.h>
 
 #include <boost/assign/list_of.hpp>
+#include <bitcoin/bst/claim.h>
+#include <boost/foreach.hpp>
 
 using namespace std;
 using namespace boost::assign;
@@ -101,6 +103,58 @@ static const Checkpoints::CCheckpointData dataRegtest = {
         0
     };
 
+static bool generateGenesis(CBlock& genesis) {
+    /**
+     * Build the genesis block. Note that the output of the genesis coinbase cannot
+     * be spent as it did not originally exist in the database.
+     *
+     * CBlock(hash=000000000019d6, ver=1, hashPrevBlock=00000000000000, hashMerkleRoot=4a5e1e, nTime=1231006505, nBits=1d00ffff, nNonce=2083236893, vtx=1)
+     *   CTransaction(hash=4a5e1e, ver=1, vin.size=1, vout.size=1, nLockTime=0)
+     *     CTxIn(COutPoint(000000, -1), coinbase 04ffff001d0104455468652054696d65732030332f4a616e2f32303039204368616e63656c6c6f72206f6e206272696e6b206f66207365636f6e64206261696c6f757420666f722062616e6b73)
+     *     CTxOut(nValue=50.00000000, scriptPubKey=0x5F1DF16B2B704C8A578D0B)
+     *   vMerkleTree: 4a5e1e
+     */
+    bst::snapshot_reader snapshot_reader;
+    ifstream stream;
+    if (! bst::openSnapshot(stream, snapshot_reader)) return false;
+    bst::SnapshotEntryCollection p2pkhEntries = bst::getP2PKHCollection(snapshot_reader);
+    bst::SnapshotEntryCollection p2shEntries = bst::getP2SHCollection(snapshot_reader);
+
+    const char* pszTimestamp = "NY Times 05/Oct/2011 Steve Jobs, Apple’s Visionary, Dies at 56";
+    CMutableTransaction txNew;
+    txNew.vin.resize(1);
+    txNew.vout.resize(1);
+    txNew.vin[0].scriptSig = CScript() << 486604799 << CScriptNum(4) << vector<unsigned char>((const unsigned char*)pszTimestamp, (const unsigned char*)pszTimestamp + strlen(pszTimestamp));
+    txNew.vout[0].nValue = 50 * COIN;
+    txNew.vout[0].scriptPubKey = CScript() << ParseHex("040184710fa689ad5023690c80f3a49c8f13f8d45b8c857fbcbc8bc4a8e4d3eb4b10f4d4604fa08dce601aaf0f470216fe1b51850b4acf21b179c45070ac7b03a9") << OP_CHECKSIG;
+    genesis.vtx.push_back(txNew);
+
+    CScript fakeSign = CScript() << 486604799;
+    BOOST_FOREACH(bst::snapshot_entry& entry, p2pkhEntries) {
+        txNew.vin[0].scriptSig = fakeSign;
+        txNew.vout[0].nValue = entry.amount;
+        txNew.vout[0].scriptPubKey = CScript() << OP_DUP << OP_HASH160 << entry.hash << OP_EQUALVERIFY << OP_CHECKSIG;
+        genesis.vtx.push_back(txNew);
+    }
+
+    BOOST_FOREACH(bst::snapshot_entry& entry, p2shEntries) {
+        txNew.vin[0].scriptSig = fakeSign;
+        txNew.vout[0].nValue = entry.amount;
+        txNew.vout[0].scriptPubKey = CScript() << OP_HASH160 << entry.hash << OP_EQUAL;
+        genesis.vtx.push_back(txNew);
+    }
+
+
+    genesis.hashPrevBlock = 0;
+    genesis.hashMerkleRoot = genesis.BuildMerkleTree();
+    genesis.nVersion = 1;
+    genesis.nTime    = 1317972665;
+    genesis.nBits    = 0x8e0ffff0;
+    genesis.nNonce   = 2084524493;
+
+    return true;
+}
+
 class CMainParams : public CChainParams {
 public:
     CMainParams() {
@@ -126,34 +180,14 @@ public:
         nTargetTimespan = 3.5 * 24 * 60 * 60; // 3.5 days
         nTargetSpacing = 2.5 * 60; // 2.5 minutes
 
-        /**
-         * Build the genesis block. Note that the output of the genesis coinbase cannot
-         * be spent as it did not originally exist in the database.
-         * 
-         * CBlock(hash=000000000019d6, ver=1, hashPrevBlock=00000000000000, hashMerkleRoot=4a5e1e, nTime=1231006505, nBits=1d00ffff, nNonce=2083236893, vtx=1)
-         *   CTransaction(hash=4a5e1e, ver=1, vin.size=1, vout.size=1, nLockTime=0)
-         *     CTxIn(COutPoint(000000, -1), coinbase 04ffff001d0104455468652054696d65732030332f4a616e2f32303039204368616e63656c6c6f72206f6e206272696e6b206f66207365636f6e64206261696c6f757420666f722062616e6b73)
-         *     CTxOut(nValue=50.00000000, scriptPubKey=0x5F1DF16B2B704C8A578D0B)
-         *   vMerkleTree: 4a5e1e
-         */
-        const char* pszTimestamp = "NY Times 05/Oct/2011 Steve Jobs, Apple’s Visionary, Dies at 56";
-        CMutableTransaction txNew;
-        txNew.vin.resize(1);
-        txNew.vout.resize(1);
-        txNew.vin[0].scriptSig = CScript() << 486604799 << CScriptNum(4) << vector<unsigned char>((const unsigned char*)pszTimestamp, (const unsigned char*)pszTimestamp + strlen(pszTimestamp));
-        txNew.vout[0].nValue = 50 * COIN;
-        txNew.vout[0].scriptPubKey = CScript() << ParseHex("040184710fa689ad5023690c80f3a49c8f13f8d45b8c857fbcbc8bc4a8e4d3eb4b10f4d4604fa08dce601aaf0f470216fe1b51850b4acf21b179c45070ac7b03a9") << OP_CHECKSIG;
-        genesis.vtx.push_back(txNew);
-        genesis.hashPrevBlock = 0;
-        genesis.hashMerkleRoot = genesis.BuildMerkleTree();
-        genesis.nVersion = 1;
-        genesis.nTime    = 1317972665;
-        genesis.nBits    = 0x1e0ffff0;
-        genesis.nNonce   = 2084524493;
+        assert(true == generateGenesis(genesis));
 
+        //TODO uncomment and fix
+        /*
         hashGenesisBlock = genesis.GetHash();
         assert(hashGenesisBlock == uint256("0x12a765e31ffd4059bada1e25190f6e98c99d9714d334efa41a195a7e7e04bfe2"));
         assert(genesis.hashMerkleRoot == uint256("0x97ddfbbae6be97fd6cdf3e7ca13232a3afff2353e29badfab7f73011edd4ced9"));
+         */
 
         vSeeds.push_back(CDNSSeedData("litecointools.com", "dnsseed.litecointools.com"));
         vSeeds.push_back(CDNSSeedData("litecoinpool.org", "dnsseed.litecoinpool.org"));
@@ -161,8 +195,8 @@ public:
         vSeeds.push_back(CDNSSeedData("koin-project.com", "dnsseed.koin-project.com"));
         vSeeds.push_back(CDNSSeedData("weminemnc.com", "dnsseed.weminemnc.com"));
 
-        base58Prefixes[PUBKEY_ADDRESS] = list_of(48);
-        base58Prefixes[SCRIPT_ADDRESS] = list_of(5);
+        base58Prefixes[PUBKEY_ADDRESS] = list_of(52);
+        base58Prefixes[SCRIPT_ADDRESS] = list_of(9);
         base58Prefixes[SECRET_KEY] =     list_of(176);
         base58Prefixes[EXT_PUBLIC_KEY] = list_of(0x04)(0x88)(0xB2)(0x1E);
         base58Prefixes[EXT_SECRET_KEY] = list_of(0x04)(0x88)(0xAD)(0xE4);
@@ -214,7 +248,7 @@ public:
         genesis.nTime = 1317798646;
         genesis.nNonce = 385270584;
         hashGenesisBlock = genesis.GetHash();
-        assert(hashGenesisBlock == uint256("0xf5ae71e26c74beacc88382716aced69cddf3dffff24f384e1808905e0188f68f"));
+        //assert(hashGenesisBlock == uint256("0xf5ae71e26c74beacc88382716aced69cddf3dffff24f384e1808905e0188f68f"));
 
         vFixedSeeds.clear();
         vSeeds.clear();
@@ -241,7 +275,7 @@ public:
         // Litecoin: Testnet v2 enforced as of block 400k
         nEnforceV2AfterHeight = 400000;
     }
-    const Checkpoints::CCheckpointData& Checkpoints() const 
+    const Checkpoints::CCheckpointData& Checkpoints() const
     {
         return dataTestnet;
     }
@@ -270,10 +304,23 @@ public:
         bnProofOfWorkLimit = ~uint256(0) >> 1;
         genesis.nTime = 1296688602;
         genesis.nBits = 0x207fffff;
-        genesis.nNonce = 0;
+        /*
+        bool fNegative;
+        bool fOverflow;
+        uint256 bnTarget;
+        bnTarget.SetCompact(genesis.nBits, &fNegative, &fOverflow);
+        for (unsigned int i = 0; true; i++) {
+            genesis.nNonce = i;
+            uint256 powHash = genesis.GetPoWHash();
+            if (powHash <= bnTarget) break;
+        }
+        cout << "nonce is " << genesis.nNonce << endl;
+         */
+        genesis.nNonce = 2;
         hashGenesisBlock = genesis.GetHash();
         nDefaultPort = 19444;
-        assert(hashGenesisBlock == uint256("0x530827f38f93b43ed12af0b3ad25a288dc02ed74d6d7857862df51fc56c416f9"));
+        cout << "hashGenesisBlock " << hashGenesisBlock.ToString() << endl;
+        assert(hashGenesisBlock == uint256("91a4d6becff084cd8bbffc48721358acb5a80e7888dc780d034b50b859a001f0"));
 
         vFixedSeeds.clear(); //! Regtest mode doesn't have any fixed seeds.
         vSeeds.clear();  //! Regtest mode doesn't have any DNS seeds.
