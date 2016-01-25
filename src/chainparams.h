@@ -13,6 +13,11 @@
 #include "uint256.h"
 
 #include <vector>
+#include <iostream>
+#include <bitcoin/bst/claim.h>
+
+#define PREMINE_SIZE 100000
+static const int PREMINE_BLOCKS = 21;
 
 typedef unsigned char MessageStartChars[MESSAGE_START_SIZE];
 
@@ -117,6 +122,116 @@ protected:
     int nEnforceV2AfterHeight;
 };
 
+class PremineBlocks {
+    bst::snapshot_reader snapshot_reader;
+    std::ifstream stream;
+    const CBlock& genesis;
+
+public:
+    PremineBlocks(const CBlock& genesis_) : genesis(genesis_) {
+        assert(bst::openSnapshot(stream, snapshot_reader));
+    }
+    PremineBlocks(const PremineBlocks& other) : genesis(other.genesis) {
+        assert(bst::openSnapshot(stream, snapshot_reader));
+    }
+
+    class const_iterator {
+    public:
+        typedef const_iterator self_type;
+        typedef CBlock value_type;
+        typedef const CBlock& reference;
+        typedef const CBlock* pointer;
+        typedef int64_t difference_type;
+        typedef std::input_iterator_tag iterator_category;
+
+        const_iterator(bst::snapshot_reader reader_, const CBlock& genesis) : index(0) {
+            reader = reader_;
+            current_block.nVersion = genesis.nVersion;
+            current_block.nTime = genesis.nTime + 1;
+            current_block.nBits = genesis.nBits;
+            current_block.hashPrevBlock = genesis.GetHash();
+        }
+        const_iterator(bst::snapshot_reader reader_, int64_t index_) {
+            index = index_;
+        }
+
+        // this operator is post-increment, so we have to return the current value and then change it
+        self_type operator++() {
+            self_type i = *this; index++; return i;
+        }
+        self_type operator++(int junk) {
+            index++;
+            current_block.hashPrevBlock = current_block.GetHash();
+            current_block.nTime++;
+            return *this;
+        }
+        reference operator*() {
+            uint64_t start = index * PREMINE_SIZE;
+            uint64_t end = (index + 1) * PREMINE_SIZE;
+            end = end > reader.header.nP2PKH + reader.header.nP2SH ? reader.header.nP2PKH + reader.header.nP2SH : end;
+
+            bst::SnapshotEntryCollection p2pkh_collection = bst::getP2PKHCollection(reader);
+            bst::SnapshotEntryCollection p2sh_collection = bst::getP2SHCollection(reader);
+
+            current_block.vtx.clear();
+            CMutableTransaction txNew;
+            txNew.vin.resize(1);
+            txNew.vout.resize(1);
+            CScript fakeSign = CScript() << 486604799;
+            txNew.vin[0].scriptSig = fakeSign;
+            for (uint64_t i = start; i < end; i++) {
+                bst::snapshot_entry entry;
+
+                if (i >= reader.header.nP2PKH) {
+                    p2sh_collection.getEntry(i - reader.header.nP2PKH, entry);
+                    txNew.vout[0].nValue = entry.amount;
+                    txNew.vout[0].scriptPubKey = CScript() << OP_HASH160 << entry.hash << OP_EQUAL;
+                } else {
+                    p2pkh_collection.getEntry(i, entry);
+                    txNew.vout[0].nValue = entry.amount;
+                    if (i < 3) {
+                        std::cout << "amount " << entry.amount << endl;
+                    }
+                    txNew.vout[0].scriptPubKey = CScript() << OP_DUP << OP_HASH160 << entry.hash << OP_EQUALVERIFY << OP_CHECKSIG;
+                }
+                current_block.vtx.push_back(txNew);
+            }
+            current_block.hashMerkleRoot = current_block.BuildMerkleTree();
+
+            // fix nonce so that PoW requirement is met
+            bool fNegative;
+            bool fOverflow;
+            uint256 bnTarget;
+            bnTarget.SetCompact(current_block.nBits, &fNegative, &fOverflow);
+            for (unsigned int i = 0; true; i++) {
+                current_block.nNonce = i;
+                uint256 powHash = current_block.GetPoWHash();
+                if (powHash <= bnTarget) break;
+            }
+
+            std::cout << "premine block " << current_block.GetHash().ToString()
+              << " nonce " << current_block.nNonce << endl;
+
+            return current_block;
+        }
+        pointer operator->() { return &(**this); }
+        bool operator==(const self_type& rhs) { return index == rhs.index; }
+        bool operator!=(const self_type& rhs) { return index != rhs.index; }
+    private:
+        uint64_t index;
+        bool done_p2pkh;
+        int64_t block_index;
+        CBlock current_block;
+        bst::snapshot_reader reader;
+    };
+
+    const_iterator begin() const { return const_iterator(snapshot_reader, genesis);}
+    const_iterator end() const {
+        int premineBlocks = ((int) snapshot_reader.header.nP2PKH + snapshot_reader.header.nP2SH + 1) / PREMINE_SIZE;
+        return const_iterator(snapshot_reader, premineBlocks);
+        }
+};
+
 /** 
  * Modifiable parameters interface is used by test cases to adapt the parameters in order
  * to test specific features more easily. Test cases should always restore the previous
@@ -156,5 +271,8 @@ void SelectParams(CBaseChainParams::Network network);
  * Returns false if an invalid combination is given.
  */
 bool SelectParamsFromCommandLine();
+
+bool IsPreminedBlock(const CBlock& block);
+
 
 #endif // BITCOIN_CHAINPARAMS_H

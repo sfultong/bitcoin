@@ -1244,7 +1244,7 @@ bool ReadBlockFromDisk(CBlock& block, const CBlockIndex* pindex)
 
 CAmount GetBlockValue(int nHeight, const CAmount& nFees)
 {
-    CAmount nSubsidy = 50 * COIN;
+    CAmount nSubsidy = 12 * COIN;
     int halvings = nHeight / Params().SubsidyHalvingInterval();
 
     // Force block reward to zero when right shift is undefined.
@@ -1671,6 +1671,20 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
     // Special case for the genesis block, skipping connection of its transactions
     // (its coinbase is unspendable)
     if (block.GetHash() == Params().HashGenesisBlock()) {
+        view.SetBestBlock(pindex->GetBlockHash());
+        return true;
+    }
+
+    // If this is a premine block, don't run any checks on the transactions, just add them to view
+    if (IsPreminedBlock(block)) {
+        CTxUndo undoDummy;
+        for (unsigned int i = 0; i < block.vtx.size(); i++) {
+            const CTransaction &tx = block.vtx[i];
+            UpdateCoins(tx, state, view, undoDummy, pindex->nHeight);
+        }
+
+        pindex->RaiseValidity(BLOCK_VALID_SCRIPTS);
+        setDirtyBlockIndex.insert(pindex);
         view.SetBestBlock(pindex->GetBlockHash());
         return true;
     }
@@ -2457,6 +2471,9 @@ bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state, bool f
 
 bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW, bool fCheckMerkleRoot)
 {
+    // don't check premined blocks, as they have multiple coinbases
+    if (IsPreminedBlock(block)) return true;
+
     // These are checks that are independent of context.
 
     // Check that the header is valid (particularly PoW).  This is mostly
@@ -3062,7 +3079,7 @@ bool CVerifyDB::VerifyDB(CCoinsView *coinsview, int nCheckLevel, int nCheckDepth
             }
         }
         // check level 3: check for inconsistencies during memory-only disconnect of tip blocks
-        if (nCheckLevel >= 3 && pindex == pindexState && (coins.GetCacheSize() + pcoinsTip->GetCacheSize()) <= nCoinCacheSize) {
+        if (nCheckLevel >= 3 && pindex == pindexState && (coins.GetCacheSize() + pcoinsTip->GetCacheSize()) <= nCoinCacheSize && pindex->nHeight > PREMINE_BLOCKS) {
             bool fClean = true;
             if (!DisconnectBlock(block, state, pindex, coins, &fClean))
                 return error("VerifyDB() : *** irrecoverable inconsistency in block data at %d, hash=%s", pindex->nHeight, pindex->GetBlockHash().ToString());
@@ -3144,6 +3161,16 @@ bool InitBlockIndex() {
                 return error("LoadBlockIndex() : genesis block not accepted");
             if (!ActivateBestChain(state, &block))
                 return error("LoadBlockIndex() : genesis block cannot be activated");
+            // iterate through premine blocks
+            PremineBlocks premineBlocks = PremineBlocks(block);
+            for (   PremineBlocks::const_iterator blocks = premineBlocks.begin();
+                    blocks != premineBlocks.end();
+                    blocks++) {
+                CBlock currentBlock = *blocks;
+                if (!ProcessNewBlock(state, NULL, &currentBlock, NULL)) {
+                    return error("LoadBlockIndex() : failed to process premine block");
+                }
+            }
             // Force a chainstate write so that when we VerifyDB in a moment, it doesnt check stale data
             return FlushStateToDisk(state, FLUSH_STATE_ALWAYS);
         } catch(std::runtime_error &e) {
