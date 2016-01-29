@@ -177,7 +177,7 @@ public:
          */
 
         // TODO: fix
-        vSeeds.push_back(CDNSSeedData("litecointools.com", "dnsseed.litecointools.com"));
+        vSeeds.push_back(CDNSSeedData("bitcoin-lite.com", "dnsseed.bitcoin-lite.com"));
 
         base58Prefixes[PUBKEY_ADDRESS] = list_of(52);
         base58Prefixes[SCRIPT_ADDRESS] = list_of(9);
@@ -237,7 +237,7 @@ public:
         vFixedSeeds.clear();
         vSeeds.clear();
         // TODO: fix
-        vSeeds.push_back(CDNSSeedData("litecointools.com", "testnet-seed.litecointools.com"));
+        vSeeds.push_back(CDNSSeedData("bitcoin-lite.com", "testnet-seed.bitcoin-lite.com"));
 
         base58Prefixes[PUBKEY_ADDRESS] = list_of(111);
         base58Prefixes[SCRIPT_ADDRESS] = list_of(196);
