@@ -84,6 +84,8 @@ public:
     const std::vector<unsigned char>& Base58Prefix(Base58Type type) const { return base58Prefixes[type]; }
     const std::vector<CAddress>& FixedSeeds() const { return vFixedSeeds; }
     virtual const Checkpoints::CCheckpointData& Checkpoints() const = 0;
+    virtual bool IsPremineHash(const uint256 hash) = 0;
+    virtual const uint32_t* getNonceList() const = 0;
 
     // Litecoin: Height to enforce v2 block
     int EnforceV2AfterHeight() const { return nEnforceV2AfterHeight; }
@@ -126,12 +128,13 @@ class PremineBlocks {
     bst::snapshot_reader snapshot_reader;
     std::ifstream stream;
     const CBlock& genesis;
+    const uint32_t* nonceList;
 
 public:
-    PremineBlocks(const CBlock& genesis_) : genesis(genesis_) {
+    PremineBlocks(const CBlock& genesis_, const uint32_t* nonceList_) : genesis(genesis_), nonceList(nonceList_) {
         assert(bst::openSnapshot(stream, snapshot_reader));
     }
-    PremineBlocks(const PremineBlocks& other) : genesis(other.genesis) {
+    PremineBlocks(const PremineBlocks& other) : genesis(other.genesis), nonceList(other.nonceList) {
         assert(bst::openSnapshot(stream, snapshot_reader));
     }
 
@@ -144,7 +147,7 @@ public:
         typedef int64_t difference_type;
         typedef std::input_iterator_tag iterator_category;
 
-        const_iterator(bst::snapshot_reader reader_, const CBlock& genesis) : index(0) {
+        const_iterator(bst::snapshot_reader reader_, const CBlock& genesis, const uint32_t* nonceList_) : nonceList(nonceList_), index(0) {
             reader = reader_;
             current_block.nVersion = genesis.nVersion;
             current_block.nTime = genesis.nTime + 1;
@@ -199,6 +202,7 @@ public:
             current_block.hashMerkleRoot = current_block.BuildMerkleTree();
 
             // fix nonce so that PoW requirement is met
+            /*
             bool fNegative;
             bool fOverflow;
             uint256 bnTarget;
@@ -208,6 +212,8 @@ public:
                 uint256 powHash = current_block.GetPoWHash();
                 if (powHash <= bnTarget) break;
             }
+             */
+            current_block.nNonce = nonceList[index];
 
             std::cout << "premine block " << current_block.GetHash().ToString()
               << " nonce " << current_block.nNonce << endl;
@@ -218,6 +224,7 @@ public:
         bool operator==(const self_type& rhs) { return index == rhs.index; }
         bool operator!=(const self_type& rhs) { return index != rhs.index; }
     private:
+        const uint32_t* nonceList;
         uint64_t index;
         bool done_p2pkh;
         int64_t block_index;
@@ -225,7 +232,7 @@ public:
         bst::snapshot_reader reader;
     };
 
-    const_iterator begin() const { return const_iterator(snapshot_reader, genesis);}
+    const_iterator begin() const { return const_iterator(snapshot_reader, genesis, nonceList);}
     const_iterator end() const {
         int premineBlocks = ((int) snapshot_reader.header.nP2PKH + snapshot_reader.header.nP2SH + 1) / PREMINE_SIZE;
         return const_iterator(snapshot_reader, premineBlocks);

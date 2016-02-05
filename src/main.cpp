@@ -3162,7 +3162,15 @@ bool InitBlockIndex() {
             if (!ActivateBestChain(state, &block))
                 return error("LoadBlockIndex() : genesis block cannot be activated");
             // iterate through premine blocks
-            PremineBlocks premineBlocks = PremineBlocks(block);
+            PremineBlocks premineBlocks = PremineBlocks(block, Params().getNonceList());
+            /*
+            for (   PremineBlocks::const_iterator blocks = premineBlocks.begin();
+                    blocks != premineBlocks.end();
+                    blocks++) {
+                CBlock currentBlock = *blocks;
+            }
+             */
+
             for (   PremineBlocks::const_iterator blocks = premineBlocks.begin();
                     blocks != premineBlocks.end();
                     blocks++) {
