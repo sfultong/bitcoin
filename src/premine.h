@@ -61,12 +61,12 @@ static const uint256 TESTNET_PREMINE_HASH12 = uint256("608795846f29a660671e874fc
 static const uint256 TESTNET_PREMINE_HASH13 = uint256("3bfc72e385ff7bdf19e36d93f609b4c02cf0be7dfc04d36aef0ae21d00f27a92");
 static const uint256 TESTNET_PREMINE_HASH14 = uint256("e75342454c9c117f0be7e1ce49123eadbccba464bda93fb34368e1891c231441");
 static const uint256 TESTNET_PREMINE_HASH15 = uint256("a3af504b4ae28164d5eabe7faee985470cd962d19a1c3b45cc2b1ecb68215f97");
-static const uint256 TESTNET_PREMINE_HASH16 = uint256("6722bbf30e92ea0cc2e412ab259bb00c046e640195c2401e6843d065fc653943");
-static const uint256 TESTNET_PREMINE_HASH17 = uint256("9e4acea535d00e0376e4656b794ec835be8c9a6cede6f9e516e944a8357d4b37");
-static const uint256 TESTNET_PREMINE_HASH18 = uint256("7be78a3fa95a22bf5c66298c654fa937eddd216bbbdb9e092c28d4fe4ecd02e1");
-static const uint256 TESTNET_PREMINE_HASH19 = uint256("319be1f89ed6305cf3e15e2b210d3fcefad724eb0ebdb9a0800f777019aee3d9");
-static const uint256 TESTNET_PREMINE_HASH20 = uint256("3bdbbd815d6ecb62b5ebf4f5310a1edb49982d4aa571f85ffe48dd2a01988170");
-static const uint256 TESTNET_PREMINE_HASH21 = uint256("5a7d67d69d9e43fba82dc522cb7e6aed2a5891749826c8755cd26cc510766a79");
+static const uint256 TESTNET_PREMINE_HASH16 = uint256("2813033b8d6b88acfd40ea8adcc813940cd835c24f481931361e89494051b6af");
+static const uint256 TESTNET_PREMINE_HASH17 = uint256("46907418254fb04f90a07aceaddb4d9794f56190a4adde183de0c7ad02c5b21a");
+static const uint256 TESTNET_PREMINE_HASH18 = uint256("26730a7df27a2345809f372802560cab4a6b68807ffd110ed6d53dd197f42c9f");
+static const uint256 TESTNET_PREMINE_HASH19 = uint256("526f9ccdb7bb77597e0e2b69c08ace9dab60a5a230b6e8de4b94c474e8ae9a1c");
+static const uint256 TESTNET_PREMINE_HASH20 = uint256("ae716f907dd64f45ed36a63937497ea24bf21447b9ece45d128de6d6ea6ec6ff");
+static const uint256 TESTNET_PREMINE_HASH21 = uint256("feebf2ce670d309b291260dbcc9d39c729a050eff11642bb5040d531380e6842");
 static const uint256* TESTNET_PREMINE_HASHES[PREMINE_BLOCKS] = {
         &TESTNET_PREMINE_HASH1,
         &TESTNET_PREMINE_HASH2,
@@ -106,12 +106,12 @@ static const uint32_t TESTNET_PREMINE_NONCES[PREMINE_BLOCKS] = {
         396383,
         19244,
         2795577,
-        157013,
-        435587,
-        424066,
-        2024806,
-        992423,
-        1755532
+        141886,
+        168019,
+        2871625,
+        1013415,
+        222273,
+        840096
 };
 static const uint256 REGTEST_PREMINE_HASH1  = uint256("9ed215827aebb56bdab34c70427403c3b3b9321c131f8540747e3b4efc66ae40");
 static const uint256 REGTEST_PREMINE_HASH2  = uint256("11a0f7f84b6766eaa67a64b4ae9c60d19c03df05fe9c703c38c9e441d0a4c937");
@@ -128,12 +128,12 @@ static const uint256 REGTEST_PREMINE_HASH12 = uint256("28d548adb8ebf17063a8025a3
 static const uint256 REGTEST_PREMINE_HASH13 = uint256("ed9aab9fe7bc8598eedd41d37f26079a3e842560d7a07df1dc63a0d862248a74");
 static const uint256 REGTEST_PREMINE_HASH14 = uint256("de9dc637328f704f4b775431afcae31db3d3ae6ba6a9e2ad46eb1ef36043759c");
 static const uint256 REGTEST_PREMINE_HASH15 = uint256("589a53f5c26556bcb0075d1015eaa47ec4161e1c79adb55627645f0ee8207b2a");
-static const uint256 REGTEST_PREMINE_HASH16 = uint256("abe261d925ea4dbd86a1c338ea9325e27ec386fd2264615270402e6fb330799a");
-static const uint256 REGTEST_PREMINE_HASH17 = uint256("e5aaceb92712f85ccef33f2a57d7db360d99dd97c656b89faef4f4df2e2fabc9");
-static const uint256 REGTEST_PREMINE_HASH18 = uint256("ddf972f9fdfbca10f700fa23fc1954bd3c1db1d60a226b19a0154d511e0383d2");
-static const uint256 REGTEST_PREMINE_HASH19 = uint256("9e1cd1da45d5fe4476d6868e6dc8b063bbd49e8610363b7d7ac1f0dbea23124e");
-static const uint256 REGTEST_PREMINE_HASH20 = uint256("21eb3151c1750680bdc20e020b2cf08ca6d86c2c8b7d408920d610df45d6a7a7");
-static const uint256 REGTEST_PREMINE_HASH21 = uint256("a5ea1227c0012bc9a760b9ac3d3fc96ddaafc2971c5f1bb0f85fde39cf508bbb");
+static const uint256 REGTEST_PREMINE_HASH16 = uint256("c84164ed9c108d31af5b3c16047bbd77adf95190e1999b4c2be0c392adbc6bf9");
+static const uint256 REGTEST_PREMINE_HASH17 = uint256("62a0d933e572f9f58cb689e9ed5ff4b50fe9b93cdee7dc9ea6ab7c819c50b3f6");
+static const uint256 REGTEST_PREMINE_HASH18 = uint256("dcf222f6bfe5bdd8b3ecf52a34761c9617a97aee5f047f762ef3143c31091a25");
+static const uint256 REGTEST_PREMINE_HASH19 = uint256("a12a7f93371f5d33e478e9fc426b197c336e8e9d78e4db15667819d2d25b1257");
+static const uint256 REGTEST_PREMINE_HASH20 = uint256("3297ff8d8bdc5574a34ca6d2eae78860b125cb9d0f0ae51e5bdd5bbe32b7eb8e");
+static const uint256 REGTEST_PREMINE_HASH21 = uint256("d13c0589e7c88bc314e21c7116c0799105fdc4a00aea9b6bb01ac6f8fd48a57b");
 static const uint256* REGTEST_PREMINE_HASHES[PREMINE_BLOCKS] = {
         &REGTEST_PREMINE_HASH1,
         &REGTEST_PREMINE_HASH2,
@@ -157,6 +157,7 @@ static const uint256* REGTEST_PREMINE_HASHES[PREMINE_BLOCKS] = {
         &REGTEST_PREMINE_HASH20,
         &REGTEST_PREMINE_HASH21
 };
+
 static const uint32_t REGTEST_PREMINE_NONCES[PREMINE_BLOCKS] = {
         1,
         0,
@@ -173,10 +174,10 @@ static const uint32_t REGTEST_PREMINE_NONCES[PREMINE_BLOCKS] = {
         2,
         0,
         2,
-        0,
-        3,
         1,
         0,
-        0,
+        1,
+        1,
+        5,
         0
 };

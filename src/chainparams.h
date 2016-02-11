@@ -192,9 +192,6 @@ public:
                 } else {
                     p2pkh_collection.getEntry(i, entry);
                     txNew.vout[0].nValue = entry.amount;
-                    if (i < 3) {
-                        std::cout << "amount " << entry.amount << endl;
-                    }
                     txNew.vout[0].scriptPubKey = CScript() << OP_DUP << OP_HASH160 << entry.hash << OP_EQUALVERIFY << OP_CHECKSIG;
                 }
                 current_block.vtx.push_back(txNew);
