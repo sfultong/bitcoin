@@ -67,11 +67,11 @@ bin_PROGRAMS =
 TESTS =
 
 if BUILD_BITCOIND
-  bin_PROGRAMS += litecoind
+  bin_PROGRAMS += ubitcoind
 endif
 
 if BUILD_BITCOIN_UTILS
-  bin_PROGRAMS += litecoin-cli litecoin-tx
+  bin_PROGRAMS += ubitcoin-cli ubitcoin-tx
 endif
 
 .PHONY: FORCE
@@ -302,8 +302,8 @@ libbitcoin_cli_a_SOURCES = \
 nodist_libbitcoin_util_a_SOURCES = $(srcdir)/obj/build.h
 #
 
-# litecoind binary #
-litecoind_LDADD = \
+# ubitcoind binary #
+ubitcoind_LDADD = \
   $(LIBBITCOIN_SERVER) \
   $(LIBBITCOIN_COMMON) \
   $(LIBBITCOIN_UNIVALUE) \
@@ -315,35 +315,35 @@ litecoind_LDADD = \
   $(LIBSECP256K1)
 
 if ENABLE_WALLET
-litecoind_LDADD += libbitcoin_wallet.a
+ubitcoind_LDADD += libbitcoin_wallet.a
 endif
-litecoind_SOURCES = bitcoind.cpp
+ubitcoind_SOURCES = bitcoind.cpp
 #
 
 if TARGET_WINDOWS
-litecoind_SOURCES += bitcoind-res.rc
+ubitcoind_SOURCES += bitcoind-res.rc
 endif
 
-litecoind_LDADD += $(BOOST_LIBS) $(BDB_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS)
-litecoind_CPPFLAGS = $(BITCOIN_INCLUDES)
-litecoind_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
+ubitcoind_LDADD += $(BOOST_LIBS) $(BDB_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS)
+ubitcoind_CPPFLAGS = $(BITCOIN_INCLUDES)
+ubitcoind_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
 
 # bitcoin-cli binary #
-litecoin_cli_LDADD = \
+bitcoinunified_cli_LDADD = \
   $(LIBBITCOIN_CLI) \
   $(LIBBITCOIN_UTIL) \
   $(BOOST_LIBS) \
   $(SSL_LIBS) \
   $(CRYPTO_LIBS)
 
-litecoin_cli_SOURCES = \
+bitcoinunified_cli_SOURCES = \
   bitcoin-cli.cpp
 
-litecoin_cli_CPPFLAGS = $(BITCOIN_INCLUDES)
+bitcoinunified_cli_CPPFLAGS = $(BITCOIN_INCLUDES)
 #
 
 # bitcoin-tx binary #
-litecoin_tx_LDADD = \
+bitcoinunified_tx_LDADD = \
   $(LIBBITCOIN_UNIVALUE) \
   $(LIBBITCOIN_COMMON) \
   $(LIBBITCOIN_UTIL) \
@@ -352,15 +352,15 @@ litecoin_tx_LDADD = \
   $(BOOST_LIBS) \
   $(CRYPTO_LIBS)
 
-litecoin_tx_SOURCES = bitcoin-tx.cpp
-litecoin_tx_CPPFLAGS = $(BITCOIN_INCLUDES)
+bitcoinunified_tx_SOURCES = bitcoin-tx.cpp
+bitcoinunified_tx_CPPFLAGS = $(BITCOIN_INCLUDES)
 #
-litecoin_tx_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
+bitcoinunified_tx_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
 
 if TARGET_WINDOWS
-litecoin_cli_SOURCES += bitcoin-cli-res.rc
+bitcoinunified_cli_SOURCES += bitcoin-cli-res.rc
 endif
-litecoin_cli_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
+bitcoinunified_cli_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
 
 if BUILD_BITCOIN_LIBS
 include_HEADERS = script/bitcoinconsensus.h
