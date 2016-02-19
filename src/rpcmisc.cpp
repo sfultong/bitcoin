@@ -154,14 +154,14 @@ Value validateaddress(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() != 1)
         throw runtime_error(
-            "validateaddress \"bitcoinunifiedaddress\"\n"
+            "validateaddress \"address\"\n"
             "\nReturn information about the given bitcoinunified address.\n"
             "\nArguments:\n"
-            "1. \"bitcoinunifiedaddress\"     (string, required) The bitcoinunified address to validate\n"
+            "1. \"address\"     (string, required) The bitcoinunified address to validate\n"
             "\nResult:\n"
             "{\n"
             "  \"isvalid\" : true|false,         (boolean) If the address is valid or not. If not, this is the only property returned.\n"
-            "  \"address\" : \"bitcoinunifiedaddress\", (string) The bitcoinunified address validated\n"
+            "  \"address\" : \"address\", (string) The bitcoinunified address validated\n"
             "  \"ismine\" : true|false,          (boolean) If the address is yours or not\n"
             "  \"isscript\" : true|false,        (boolean) If the key is a script\n"
             "  \"pubkey\" : \"publickeyhex\",    (string) The hex value of the raw public key\n"
@@ -309,10 +309,10 @@ Value verifymessage(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() != 3)
         throw runtime_error(
-            "verifymessage \"bitcoinunifiedaddress\" \"signature\" \"message\"\n"
+            "verifymessage \"address\" \"signature\" \"message\"\n"
             "\nVerify a signed message\n"
             "\nArguments:\n"
-            "1. \"bitcoinunifiedaddress\"  (string, required) The bitcoinunified address to use for the signature.\n"
+            "1. \"address\"  (string, required) The bitcoinunified address to use for the signature.\n"
             "2. \"signature\"       (string, required) The signature provided by the signer in base 64 encoding (see signmessage).\n"
             "3. \"message\"         (string, required) The message that was signed.\n"
             "\nResult:\n"
