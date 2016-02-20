@@ -21,6 +21,7 @@
 #include "utilmoneystr.h"
 
 #include <sstream>
+#include <iostream>
 
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/filesystem.hpp>
@@ -3162,7 +3163,15 @@ bool InitBlockIndex() {
             if (!ActivateBestChain(state, &block))
                 return error("LoadBlockIndex() : genesis block cannot be activated");
             // iterate through premine blocks
-            PremineBlocks premineBlocks = PremineBlocks(block, Params().getNonceList());
+            boost::filesystem::path snapshotName = GetDataDir() / "snapshot";
+            std::ifstream snapshotStream;
+            snapshotStream.open(snapshotName.string().c_str(), ios::binary);
+            if (! snapshotStream.is_open())
+            {
+                return error("LoadBlockIndex() : could not open premine snapshot");
+            }
+
+            PremineBlocks premineBlocks = PremineBlocks(block, Params().getNonceList(), snapshotStream);
             /*
             for (   PremineBlocks::const_iterator blocks = premineBlocks.begin();
                     blocks != premineBlocks.end();

@@ -125,17 +125,16 @@ protected:
 };
 
 class PremineBlocks {
-    bst::snapshot_reader snapshot_reader;
-    std::ifstream stream;
     const CBlock& genesis;
     const uint32_t* nonceList;
+    bst::snapshot_reader snapshot_reader;
+    std::ifstream& stream;
 
 public:
-    PremineBlocks(const CBlock& genesis_, const uint32_t* nonceList_) : genesis(genesis_), nonceList(nonceList_) {
+    PremineBlocks(const CBlock& genesis_, const uint32_t* nonceList_, std::ifstream& stream_) : genesis(genesis_), nonceList(nonceList_), stream(stream_) {
         assert(bst::openSnapshot(stream, snapshot_reader));
     }
-    PremineBlocks(const PremineBlocks& other) : genesis(other.genesis), nonceList(other.nonceList) {
-        assert(bst::openSnapshot(stream, snapshot_reader));
+    PremineBlocks(const PremineBlocks& other) : genesis(other.genesis), nonceList(other.nonceList), stream(other.stream) {
     }
 
     class const_iterator {
